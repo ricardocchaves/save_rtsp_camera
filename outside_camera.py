@@ -28,8 +28,11 @@ def main():
         # Read frame
         ret,frame = vid.read()
         # Build file name
-        t = datetime.datetime.now().strftime("%Y-%b-%d_%H:%M:%S")
-        fname = "{}cam".format(t)
+        #t = datetime.datetime.now().strftime("%Y-%b-%d_%H:%M:%S")
+        t = datetime.datetime.now()
+        path = "{}/{}/{}".format(t.year,t.month,t.day)
+        os.system("mkdir -p {}".format(path))
+        fname = "{}/{}:{}:{}".format(path,t.hour,t.minute,t.second)
         fname_png = fname+".png"
         fname_jpg = fname+".jpg"
         # Write frame
