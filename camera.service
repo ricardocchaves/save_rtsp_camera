@@ -4,7 +4,7 @@ Description=Security Camera service
 User=pi
 # The configuration file application.properties should be here:
 #change this to your workspace
-WorkingDirectory=/home/pi
+WorkingDirectory=/home/pi/save_outside_camera
 #path to executable.
 #executable is a bash script which calls jar file
 ExecStart=/home/pi/save_outside_camera/outside_camera.py
