@@ -3,7 +3,8 @@ Connect to a security camera through RTSP and save the frames in storage
 # Setup
 ## Requirements
 ```
-sudo apt install python3-opencv
+apt install python3-opencv
+apt install imagemagick
 pip3 install numpy
 ```
 ## Setup
