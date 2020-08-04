@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from cv2 import VideoCapture, imwrite, waitKey
+from cv2 import VideoCapture, imwrite, waitKey, IMWRITE_JPEG_QUALITY
 import datetime
 import os
 import logging as log
@@ -11,6 +11,9 @@ def set_logging():
     fileHandler.setFormatter(logFormatter)
     rootLogger.addHandler(fileHandler)
     rootLogger.setLevel(log.DEBUG)
+
+def write_frame(frame,fname,compression=50):
+    imwrite(fname, frame, [IMWRITE_JPEG_QUALITY, compression])
 
 def main():
     set_logging()
@@ -30,21 +33,19 @@ def main():
         if not ret:
             # Something wrong with video stream, restarting capture
             vid = VideoCapture(server)
-            log.debug("Bad frame. Restarting capture.")
+            log.debug("Bad frame. Restarted capture.")
             continue
         # Build file name
         t = datetime.datetime.now()
         path = "{}/{}/{}".format(t.year,t.month,t.day)
         if not os.path.isdir(path):
             os.system("mkdir -p {}".format(path))
-        fname = "{}/{}:{}:{}".format(path,t.hour,t.minute,t.second)
-        fname_png = fname+".png"
-        fname_jpg = fname+".jpg"
+        fname = "{}/{}:{}:{}.jpg".format(path,t.hour,t.minute,t.second)
+        
         # Write frame
-        imwrite(fname_png,frame)
-        os.system("convert {} -quality 50% {}".format(fname_png,fname_jpg))
-        os.system("rm {}".format(fname_png))
-        log.debug("Wrote {}x{} (50%) frame to {}".format(frame.shape[1],frame.shape[0],fname_jpg))
+        write_frame(frame,fname)
+        frame_h,frame_w,_ = frame.shape
+        log.debug("Wrote {}x{} (50%) frame to {}".format(frame_w,frame_h,fname))
         # Wait `interval` milliseconds
         waitKey(interval)
 
