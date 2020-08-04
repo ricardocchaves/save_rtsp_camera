@@ -27,11 +27,15 @@ def main():
     while True:
         # Read frame
         ret,frame = vid.read()
+        if not ret:
+            # Something wrong with video stream, restarting capture
+            vid = VideoCapture(server)
+            log.debug("Bad frame. Restarting capture.")
         # Build file name
-        #t = datetime.datetime.now().strftime("%Y-%b-%d_%H:%M:%S")
         t = datetime.datetime.now()
         path = "{}/{}/{}".format(t.year,t.month,t.day)
-        os.system("mkdir -p {}".format(path))
+        if not os.path.isdir(path):
+            os.system("mkdir -p {}".format(path))
         fname = "{}/{}:{}:{}".format(path,t.hour,t.minute,t.second)
         fname_png = fname+".png"
         fname_jpg = fname+".jpg"
