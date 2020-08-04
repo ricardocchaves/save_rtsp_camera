@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 from cv2 import VideoCapture, imwrite, waitKey, IMWRITE_JPEG_QUALITY
 from datetime import datetime
-from os import environ, chdir, path, system
+from os import environ, chdir, system
+from os import path as p
 import logging as log
 
 # Initializes logging
@@ -26,8 +27,8 @@ def main():
     log.debug("Service starting...")
     log.debug("PARAMETER:: Server: {}".format(server))
     log.debug("PARAMETER:: Interval: {}ms".format(interval))
-    path = os.environ["HOME"]+"/SSD/camera_frames/"
-    os.chdir(path)
+    path = environ["HOME"]+"/SSD/camera_frames/"
+    chdir(path)
     log.debug("Changed current path to {}".format(path))
 
     vid = VideoCapture(server)
@@ -42,8 +43,8 @@ def main():
         # Build file name
         t = datetime.now()
         path = "{}/{}/{}".format(t.year,t.month,t.day)
-        if not os.path.isdir(path):
-            os.system("mkdir -p {}".format(path))
+        if not p.isdir(path):
+            system("mkdir -p {}".format(path))
         fname = "{}/{}:{}:{}.jpg".format(path,t.hour,t.minute,t.second)
         
         # Write frame
