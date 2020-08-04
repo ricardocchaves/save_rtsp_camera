@@ -31,6 +31,7 @@ def main():
             # Something wrong with video stream, restarting capture
             vid = VideoCapture(server)
             log.debug("Bad frame. Restarting capture.")
+            continue
         # Build file name
         t = datetime.datetime.now()
         path = "{}/{}/{}".format(t.year,t.month,t.day)
