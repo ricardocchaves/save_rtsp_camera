@@ -4,6 +4,7 @@ from datetime import datetime
 from os import environ, chdir, system
 from os import path as p
 import logging as log
+from json import load
 
 # Initializes logging
 # Logs are written to `$CWD/camera_service.log`
@@ -19,15 +20,25 @@ def set_logging():
 def write_frame(frame,fname,compression=50):
     imwrite(fname, frame, [IMWRITE_JPEG_QUALITY, compression])
 
+def parse_json(fname="./config.json"):
+    f = open(fname)
+    j = load(f)
+    ret = []
+    for k in j:
+        log.debug("Read parameter '{}:{}'".format(k,j[k]))
+        ret.append(j[k])
+    return ret
+
 # Main function
 def main():
     set_logging()
-    server = "rtsp://admin:admin@10.0.0.17"
-    interval = 3*1000 # 3 seconds
+    # Get arguments from JSON
+    user,password,interval,path = parse_json()
+    server = "rtsp://{}:{}@10.0.0.17".format(user,password)
+    interval = interval*1000 # Convert interval in seconds to milliseconds
     log.debug("Service starting...")
-    log.debug("PARAMETER:: Server: {}".format(server))
-    log.debug("PARAMETER:: Interval: {}ms".format(interval))
-    path = environ["HOME"]+"/SSD/camera_frames/"
+    log.debug("Server: {}".format(server))
+    path = p.expandvars(path) # In case of environment variables
     chdir(path)
     log.debug("Changed current path to {}".format(path))
 
@@ -38,7 +49,7 @@ def main():
         if not ret:
             # Something wrong with video stream, restarting capture
             vid = VideoCapture(server)
-            log.debug("Bad frame. Restarted capture.")
+            log.error("Bad frame. Restarted capture.")
             continue
         # Build file name
         t = datetime.now()

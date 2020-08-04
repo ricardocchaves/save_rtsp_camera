@@ -1,0 +1,6 @@
+{
+	"username": "admin",
+	"password": "admin",
+	"interval": 3,
+	"path": "$HOME/SSD/camera_frames/"
+}
