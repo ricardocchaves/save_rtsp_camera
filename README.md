@@ -1,4 +1,4 @@
-# save_outside_camera
+# Save RTSP camera
 Connect to a security camera through RTSP and save the frames in storage
 # Setup
 ## Requirements
