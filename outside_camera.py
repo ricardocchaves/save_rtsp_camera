@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 from cv2 import VideoCapture, imwrite, waitKey, IMWRITE_JPEG_QUALITY
-import datetime
-import os
+from datetime import datetime
+from os import environ, chdir, path, system
 import logging as log
 
+# Initializes logging
+# Logs are written to `$CWD/camera_service.log`
 def set_logging():
     logFormatter = log.Formatter("[%(asctime)s] %(message)s")
     rootLogger = log.getLogger()
@@ -12,9 +14,11 @@ def set_logging():
     rootLogger.addHandler(fileHandler)
     rootLogger.setLevel(log.DEBUG)
 
+# Writes `frame` as a JPG image
 def write_frame(frame,fname,compression=50):
     imwrite(fname, frame, [IMWRITE_JPEG_QUALITY, compression])
 
+# Main function
 def main():
     set_logging()
     server = "rtsp://admin:admin@10.0.0.17"
@@ -36,7 +40,7 @@ def main():
             log.debug("Bad frame. Restarted capture.")
             continue
         # Build file name
-        t = datetime.datetime.now()
+        t = datetime.now()
         path = "{}/{}/{}".format(t.year,t.month,t.day)
         if not os.path.isdir(path):
             os.system("mkdir -p {}".format(path))
