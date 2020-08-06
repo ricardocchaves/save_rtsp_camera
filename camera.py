@@ -11,13 +11,14 @@ from time import sleep
 class scanningThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
+        self.name = "scan_thread"
     
     def run(self):
-        log.debug("Starting scanning thread.")
+        log.debug("Starting thread.")
         while True:
             self.scan()
             sleep(5)
-        log.debug("Exiting scanning thread.")
+        log.debug("Exiting thread.")
     
     def scan(self):
         log.debug("Scanning...")
@@ -26,9 +27,10 @@ class cameraThread(threading.Thread):
     def __init__(self, IP):
         threading.Thread.__init__(self)
         self.ip = IP
+        self.name = "cam_{}".format(self.ip)
     
     def run(self):
-        log.debug("{} - starting camera thread".format(self.ip))
+        log.debug("Starting thread".format(self.ip))
         user,password,interval,path = parse_json() # Get arguments from JSON
         server = "rtsp://{}:{}@{}".format(user,password,self.ip)
         interval = interval*1000 # Convert interval in seconds to milliseconds
@@ -42,7 +44,7 @@ class cameraThread(threading.Thread):
             if not ret:
                 # Something wrong with video stream, restarting capture
                 vid = VideoCapture(server)
-                log.error("{} - Bad frame. Restarted capture.".format(self.ip))
+                log.error("Bad frame. Restarted capture.".format(self.ip))
                 continue
             # Build file name
             t = datetime.now()
@@ -56,7 +58,7 @@ class cameraThread(threading.Thread):
             log.debug("Wrote {}x{} (50%) frame to {}".format(frame_w,frame_h,fname))
             # Wait `interval` milliseconds
             waitKey(interval)
-        log.debug("{} - exiting camera thread".format(self.ip))
+        log.debug("Exiting thread".format(self.ip))
 
     # Write `frame` as a JPG image
     def write_frame(self,frame,fname,compression=50):
@@ -65,7 +67,7 @@ class cameraThread(threading.Thread):
 # Initializes logging
 # Logs are written to `$CWD/camera_service.log`
 def set_logging():
-    logFormatter = log.Formatter("[%(asctime)s] %(message)s")
+    logFormatter = log.Formatter("[%(asctime)s] %(threadName)s - %(message)s")
     rootLogger = log.getLogger()
     fileHandler = log.FileHandler("camera_service.log")
     fileHandler.setFormatter(logFormatter)
