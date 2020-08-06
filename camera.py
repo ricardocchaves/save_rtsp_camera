@@ -5,6 +5,62 @@ from os import environ, chdir, system
 from os import path as p
 import logging as log
 from json import load
+import threading
+from time import sleep
+
+class scanningThread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+    
+    def run(self):
+        log.debug("Starting scanning thread.")
+        while True:
+            self.scan()
+            sleep(5)
+        log.debug("Exiting scanning thread.")
+    
+    def scan(self):
+        log.debug("Scanning...")
+
+class cameraThread(threading.Thread):
+    def __init__(self, IP):
+        threading.Thread.__init__(self)
+        self.ip = IP
+    
+    def run(self):
+        log.debug("{} - starting camera thread".format(self.ip))
+        user,password,interval,path = parse_json() # Get arguments from JSON
+        server = "rtsp://{}:{}@{}".format(user,password,self.ip)
+        interval = interval*1000 # Convert interval in seconds to milliseconds
+        path = p.expandvars(path) # In case of environment variables
+        chdir(path)
+        
+        vid = VideoCapture(server)
+        while True:
+            # Read frame
+            ret,frame = vid.read()
+            if not ret:
+                # Something wrong with video stream, restarting capture
+                vid = VideoCapture(server)
+                log.error("{} - Bad frame. Restarted capture.".format(self.ip))
+                continue
+            # Build file name
+            t = datetime.now()
+            path = "{}/{}/{}".format(t.year,t.month,t.day)
+            if not p.isdir(path):
+                system("mkdir -p {}".format(path))
+            fname = "{}/{}_{}:{}:{}.jpg".format(path,self.ip,t.hour,t.minute,t.second)
+            # Write frame
+            self.write_frame(frame,fname)
+            frame_h,frame_w,_ = frame.shape
+            log.debug("Wrote {}x{} (50%) frame to {}".format(frame_w,frame_h,fname))
+            # Wait `interval` milliseconds
+            waitKey(interval)
+        log.debug("{} - exiting camera thread".format(self.ip))
+
+    # Write `frame` as a JPG image
+    def write_frame(self,frame,fname,compression=50):
+        imwrite(fname, frame, [IMWRITE_JPEG_QUALITY, compression])
 
 # Initializes logging
 # Logs are written to `$CWD/camera_service.log`
@@ -15,10 +71,6 @@ def set_logging():
     fileHandler.setFormatter(logFormatter)
     rootLogger.addHandler(fileHandler)
     rootLogger.setLevel(log.DEBUG)
-
-# Writes `frame` as a JPG image
-def write_frame(frame,fname,compression=50):
-    imwrite(fname, frame, [IMWRITE_JPEG_QUALITY, compression])
 
 def parse_json(fname="./config.json"):
     f = open(fname)
@@ -32,38 +84,12 @@ def parse_json(fname="./config.json"):
 # Main function
 def main():
     set_logging()
-    # Get arguments from JSON
-    user,password,interval,path = parse_json()
-    server = "rtsp://{}:{}@10.0.0.2".format(user,password)
-    interval = interval*1000 # Convert interval in seconds to milliseconds
     log.debug("Service starting...")
-    log.debug("Server: {}".format(server))
-    path = p.expandvars(path) # In case of environment variables
-    chdir(path)
-    log.debug("Changed current path to {}".format(path))
 
-    vid = VideoCapture(server)
-    while True:
-        # Read frame
-        ret,frame = vid.read()
-        if not ret:
-            # Something wrong with video stream, restarting capture
-            vid = VideoCapture(server)
-            log.error("Bad frame. Restarted capture.")
-            continue
-        # Build file name
-        t = datetime.now()
-        path = "{}/{}/{}".format(t.year,t.month,t.day)
-        if not p.isdir(path):
-            system("mkdir -p {}".format(path))
-        fname = "{}/{}:{}:{}.jpg".format(path,t.hour,t.minute,t.second)
-        
-        # Write frame
-        write_frame(frame,fname)
-        frame_h,frame_w,_ = frame.shape
-        log.debug("Wrote {}x{} (50%) frame to {}".format(frame_w,frame_h,fname))
-        # Wait `interval` milliseconds
-        waitKey(interval)
+    #scan = scanningThread()
+    #scan.start()
+    cam = cameraThread("10.0.0.2")
+    cam.start()
 
 if __name__ == "__main__":
     main()
