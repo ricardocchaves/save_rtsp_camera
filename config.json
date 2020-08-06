@@ -2,5 +2,5 @@
 	"username": "admin",
 	"password": "admin",
 	"interval": 3,
-	"path": "$HOME/SSD/camera_frames/"
+	"path": "/mnt/HDD/imgs_camera/"
 }

@@ -34,7 +34,7 @@ def main():
     set_logging()
     # Get arguments from JSON
     user,password,interval,path = parse_json()
-    server = "rtsp://{}:{}@10.0.0.17".format(user,password)
+    server = "rtsp://{}:{}@10.0.0.2".format(user,password)
     interval = interval*1000 # Convert interval in seconds to milliseconds
     log.debug("Service starting...")
     log.debug("Server: {}".format(server))
