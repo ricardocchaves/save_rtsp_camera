@@ -23,6 +23,8 @@ class cameraThread(threading.Thread):
         server = "rtsp://{}:{}@{}".format(user,password,self.ip)
         interval = interval*1000 # Convert interval in seconds to milliseconds
         path = p.expandvars(path) # In case of environment variables
+        if not p.isdir(path):
+            system("mkdir -p {}".format(path))
         chdir(path)
         
         vid = VideoCapture(server)
