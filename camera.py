@@ -8,12 +8,14 @@ from json import load
 import threading
 from time import sleep
 import lan_scan
+from safe_list import SafeList
 
 class cameraThread(threading.Thread):
-    def __init__(self, IP):
+    def __init__(self, ip, available):
         threading.Thread.__init__(self)
-        self.ip = IP
+        self.ip = ip
         self.name = "cam_{}".format(self.ip)
+        self.available = available
     
     def run(self):
         log.debug("Starting thread".format(self.ip))
@@ -28,10 +30,17 @@ class cameraThread(threading.Thread):
             # Read frame
             ret,frame = vid.read()
             if not ret:
-                # Something wrong with video stream, restarting capture
-                vid = VideoCapture(server)
-                log.error("Bad frame. Restarted capture.".format(self.ip))
-                continue
+                # Something wrong with video stream
+                # Check if `self.ip` is reachable
+                if lan_scan.scan(self.ip):
+                    vid = VideoCapture(server)
+                    log.error("Bad frame. Restarted capture.".format(self.ip))
+                    continue
+                else:
+                    log.error("Server went offline. Closing capture.")
+                    self.available.take(self.ip)
+                    return
+
             # Build file name
             t = datetime.now()
             path = "{}/{}/{}".format(t.year,t.month,t.day)
@@ -74,9 +83,9 @@ def scan(available):
     ret = lan_scan.lan_scan()
     log.debug("Available: {}".format(ret))
     for ip in ret:
-        if ip not in available:
-            available.append(ip)
-            cam = cameraThread(ip)
+        if not available.contains(ip):
+            available.put(ip)
+            cam = cameraThread(ip,available)
             cam.start()
 
 # Main function
@@ -84,7 +93,7 @@ def main():
     set_logging()
     log.debug("Service starting...")
     scan_cooldown = 30*60 # 30 minutes
-    available = [] # list of IP addresses
+    available = SafeList() # list of IP addresses
     while True:
         scan(available)
         sleep(scan_cooldown)
