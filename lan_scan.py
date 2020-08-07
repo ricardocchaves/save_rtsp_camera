@@ -12,10 +12,7 @@ class scanIP(threading.Thread):
         self.lock = lock
 
     def run(self):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        socket.setdefaulttimeout(1)
-        result = s.connect_ex((self.addr,554)) # 554 is the default port for RTSP
-        if result == 0:
+        if scan(self.addr):
             self.lock.acquire()
             self.l.append(self.addr)
             self.lock.release()
@@ -46,6 +43,15 @@ def lan_scan():
         for s in scans:
             s.join()
     return available
+
+def scan(ip_address, port=554):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    socket.setdefaulttimeout(1)
+    result = s.connect_ex((ip_address,port))
+    if result == 0:
+        return True
+    else:
+        return False
 
 if __name__ == "__main__":
     from time import time
