@@ -64,7 +64,9 @@ class cameraThread(threading.Thread):
 def set_logging():
     logFormatter = log.Formatter("[%(asctime)s] %(threadName)s - %(message)s")
     rootLogger = log.getLogger()
-    fileHandler = log.FileHandler("camera_service.log")
+    t = datetime.now()
+    t_string = "{}-{}-{}_{}:{}:{}".format(t.year,t.month,t.day,t.hour,t.minute,t.second)
+    fileHandler = log.FileHandler("camera_service_{}.log".format(t_string))
     fileHandler.setFormatter(logFormatter)
     rootLogger.addHandler(fileHandler)
     rootLogger.setLevel(log.DEBUG)
