@@ -2,5 +2,6 @@
 	"default_username": "admin",
 	"default_password": "admin",
 	"interval": 3,
-	"path": "$HOME/SSD/camera_frames/"
+	"path": "$HOME/SSD/camera_frames/",
+	"servers": []
 }

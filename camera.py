@@ -16,10 +16,19 @@ class cameraThread(threading.Thread):
         self.ip = ip
         self.name = "cam_{}".format(self.ip)
         self.available = available
+        if not self.available.contains(self.ip):
+            self.available.put(self.ip)
     
     def run(self):
         log.debug("Starting thread".format(self.ip))
-        user,password,interval,path = parse_json() # Get arguments from JSON
+        user,password,interval,path,servers = parse_json() # Get arguments from JSON
+        if len(servers)>0:
+            for server in servers:
+                if self.ip == server["address"]:
+                    if "username" in server:
+                        user = server["username"]
+                    if "password" in server:
+                        password = server["password"]
         server = "rtsp://{}:{}@{}".format(user,password,self.ip)
         interval = interval*1000 # Convert interval in seconds to milliseconds
         path = p.expandvars(path) # In case of environment variables
@@ -27,6 +36,7 @@ class cameraThread(threading.Thread):
             system("mkdir -p {}".format(path))
         chdir(path)
         
+        log.debug("Connecting to {}".format(server))
         vid = VideoCapture(server)
         while True:
             # Read frame
@@ -98,6 +108,12 @@ def main():
     log.debug("Service starting...")
     scan_cooldown = 30*60 # 30 minutes
     available = SafeList() # list of IP addresses
+    _,_,_,_,servers = parse_json()
+    for server in servers:
+        ip = server["address"]
+        log.debug("Starting server {} from config.json...".format(ip))
+        cam = cameraThread(ip,available)
+        cam.start()
     while True:
         scan(available)
         sleep(scan_cooldown)
