@@ -92,13 +92,25 @@ def parse_json(fname="./config.json"):
         ret.append(j[k])
     return ret
 
+def scan(available):
+    log.debug("Scanning...")
+    ret = lan_scan.lan_scan()
+    log.debug("Available: {}".format(ret))
+    for ip in ret:
+        if ip not in available:
+            available.append(ip)
+            cam = cameraThread(ip)
+            cam.start()
+
 # Main function
 def main():
     set_logging()
     log.debug("Service starting...")
-
-    scan = scanningThread()
-    scan.start()
+    scan_cooldown = 30*60 # 30 minutes
+    available = [] # list of IP addresses
+    while True:
+        scan(available)
+        sleep(scan_cooldown)
 
 if __name__ == "__main__":
     main()
