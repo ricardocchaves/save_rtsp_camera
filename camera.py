@@ -9,29 +9,6 @@ import threading
 from time import sleep
 import lan_scan
 
-class scanningThread(threading.Thread):
-    def __init__(self):
-        threading.Thread.__init__(self)
-        self.name = "scan_thread"
-        self.scan_cooldown = 30*60 # 30 minutes
-        self.available = []
-    
-    def run(self):
-        log.debug("Starting thread.")
-        while True:
-            self.scan()
-            sleep(self.scan_cooldown)
-        log.debug("Exiting thread.")
-    
-    def scan(self):
-        log.debug("Scanning...")
-        ret = lan_scan.lan_scan()
-        for ip in ret:
-            if ip not in self.available:
-                self.available.append(ip)
-                cam = cameraThread(ip)
-                cam.start()
-
 class cameraThread(threading.Thread):
     def __init__(self, IP):
         threading.Thread.__init__(self)
