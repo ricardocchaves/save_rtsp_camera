@@ -22,12 +22,16 @@ class cameraThread(threading.Thread):
     
     def run(self):
         log.info("Starting thread".format(self.ip))
-        user,password,interval,path,servers = parse_json() # Get arguments from JSON
+        config = parse_json() # Get arguments from JSON
+        user = config["default_username"]
+        password = config["default_password"]
+        interval = config["interval"]
+        path = config["path"]
         # Check for user and passwords other than the default.
         if self.from_json:
-            log.info("Servers: {}".format(servers))
-            if len(servers)>0:
-                for server in servers:
+            log.info("Servers: {}".format(config["servers"]))
+            if len(config["servers"])>0:
+                for server in config["servers"]:
                     if self.ip == server["address"]:
                         if "username" in server:
                             user = server["username"]
@@ -92,12 +96,9 @@ def set_logging():
 def parse_json(fname="./config.json"):
     f = open(fname)
     j = load(f)
-    ret = []
-    for k in j:
-        log.debug("Read parameter '{}:{}'".format(k,j[k]))
-        ret.append(j[k])
     f.close()
-    return ret
+    log.info("Read {}".format(j))
+    return j
 
 def scan(available):
     log.info("Scanning...")
@@ -116,8 +117,8 @@ def main():
     log.info("Service starting...")
     scan_cooldown = 30*60 # 30 minutes
     available = SafeList() # list of IP addresses
-    _,_,_,_,servers = parse_json()
-    for server in servers:
+    config = parse_json()
+    for server in config["servers"]:
         ip = server["address"]
         log.info("Starting server {} from config.json...".format(ip))
         cam = cameraThread(ip,available,from_json=True)
