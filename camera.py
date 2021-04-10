@@ -11,26 +11,29 @@ import lan_scan
 from safe_list import SafeList
 
 class cameraThread(threading.Thread):
-    def __init__(self, ip, available):
+    def __init__(self, ip, available, from_json = False):
         threading.Thread.__init__(self)
         self.ip = ip
         self.name = "cam_{}".format(self.ip)
         self.available = available
+        self.from_json = from_json
         if not self.available.contains(self.ip):
             self.available.put(self.ip)
     
     def run(self):
         log.info("Starting thread".format(self.ip))
         user,password,interval,path,servers = parse_json() # Get arguments from JSON
-        log.info("Servers: {}".format(servers))
-        if len(servers)>0:
-            for server in servers:
-                if self.ip == server["address"]:
-                    if "username" in server:
-                        user = server["username"]
-                    if "password" in server:
-                        password = server["password"]
-                    break
+        # Check for user and passwords other than the default.
+        if self.from_json:
+            log.info("Servers: {}".format(servers))
+            if len(servers)>0:
+                for server in servers:
+                    if self.ip == server["address"]:
+                        if "username" in server:
+                            user = server["username"]
+                        if "password" in server:
+                            password = server["password"]
+                        break
         server = "rtsp://{}:{}@{}".format(user,password,self.ip)
         log.info("Got server {}".format(server))
         interval = interval*1000 # Convert interval in seconds to milliseconds
@@ -75,7 +78,7 @@ class cameraThread(threading.Thread):
         imwrite(fname, frame, [IMWRITE_JPEG_QUALITY, compression])
 
 # Initializes logging
-# Logs are written to `$CWD/camera_service.log`
+# Logs are written to `$CWD/camera_service_<TIME>.log`
 def set_logging():
     logFormatter = log.Formatter("[%(asctime)s] %(threadName)s - %(message)s")
     rootLogger = log.getLogger()
@@ -117,7 +120,7 @@ def main():
     for server in servers:
         ip = server["address"]
         log.info("Starting server {} from config.json...".format(ip))
-        cam = cameraThread(ip,available)
+        cam = cameraThread(ip,available,from_json=True)
         cam.start()
     while True:
         scan(available)
