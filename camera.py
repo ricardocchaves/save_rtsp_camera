@@ -61,7 +61,7 @@ class cameraThread(threading.Thread):
             path = "{}/{}/{}".format(t.year,t.month,t.day)
             if not p.isdir(path):
                 system("mkdir -p {}".format(path))
-            fname = "{}/{}_{}:{}:{}.jpg".format(path,self.ip,t.hour,t.minute,t.second)
+            fname = "{}/{}_{}.{}.{}.jpg".format(path,self.ip,t.hour,t.minute,t.second)
             # Write frame
             self.write_frame(frame,fname)
             frame_h,frame_w,_ = frame.shape
