@@ -20,8 +20,9 @@ class cameraThread(threading.Thread):
             self.available.put(self.ip)
     
     def run(self):
-        log.debug("Starting thread".format(self.ip))
+        log.info("Starting thread".format(self.ip))
         user,password,interval,path,servers = parse_json() # Get arguments from JSON
+        log.info("Servers: {}".format(servers))
         if len(servers)>0:
             for server in servers:
                 if self.ip == server["address"]:
@@ -29,14 +30,16 @@ class cameraThread(threading.Thread):
                         user = server["username"]
                     if "password" in server:
                         password = server["password"]
+                    break
         server = "rtsp://{}:{}@{}".format(user,password,self.ip)
+        log.info("Got server {}".format(server))
         interval = interval*1000 # Convert interval in seconds to milliseconds
         path = p.expandvars(path) # In case of environment variables
         if not p.isdir(path):
             system("mkdir -p {}".format(path))
         chdir(path)
         
-        log.debug("Connecting to {}".format(server))
+        log.info("Connecting to {}".format(server))
         vid = VideoCapture(server)
         while True:
             # Read frame
@@ -65,7 +68,7 @@ class cameraThread(threading.Thread):
             log.debug("Wrote {}x{} (50%) frame to {}".format(frame_w,frame_h,fname))
             # Wait `interval` milliseconds
             waitKey(interval)
-        log.debug("Exiting thread".format(self.ip))
+        log.info("Exiting thread".format(self.ip))
 
     # Write `frame` as a JPG image
     def write_frame(self,frame,fname,compression=50):
@@ -81,7 +84,7 @@ def set_logging():
     fileHandler = log.FileHandler("camera_service_{}.log".format(t_string))
     fileHandler.setFormatter(logFormatter)
     rootLogger.addHandler(fileHandler)
-    rootLogger.setLevel(log.DEBUG)
+    rootLogger.setLevel(log.INFO)
 
 def parse_json(fname="./config.json"):
     f = open(fname)
@@ -90,12 +93,14 @@ def parse_json(fname="./config.json"):
     for k in j:
         log.debug("Read parameter '{}:{}'".format(k,j[k]))
         ret.append(j[k])
+    f.close()
     return ret
 
 def scan(available):
-    log.debug("Scanning...")
+    log.info("Scanning...")
     ret = lan_scan.lan_scan()
-    log.debug("Available: {}".format(ret))
+    log.info("Available: {}".format(ret))
+    log.info("var available: {}".format(available.snapshot()))
     for ip in ret:
         if not available.contains(ip):
             available.put(ip)
@@ -105,13 +110,13 @@ def scan(available):
 # Main function
 def main():
     set_logging()
-    log.debug("Service starting...")
+    log.info("Service starting...")
     scan_cooldown = 30*60 # 30 minutes
     available = SafeList() # list of IP addresses
     _,_,_,_,servers = parse_json()
     for server in servers:
         ip = server["address"]
-        log.debug("Starting server {} from config.json...".format(ip))
+        log.info("Starting server {} from config.json...".format(ip))
         cam = cameraThread(ip,available)
         cam.start()
     while True:
